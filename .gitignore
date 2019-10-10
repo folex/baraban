@@ -1,0 +1,10 @@
+.stack-work/
+baraban.cabal
+*~
+.idea
+out
+*.iml
+
+
+
+proto
