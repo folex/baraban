@@ -16,3 +16,12 @@ message Stand {
 message Leader {
     string id = 1;
 }
+
+message RaftMessage {
+    oneof value {
+        Heartbeat heartbeat = 1;
+        Vote vote = 2;
+        Stand stand = 3;
+        Leader leader = 4;
+    }
+}
