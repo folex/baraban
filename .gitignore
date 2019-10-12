@@ -1,6 +1,15 @@
-.stack-work/
+.stack-work/**
+!.stack-work/dist/
+!.stack-work/dist/x86_64-osx/
+!.stack-work/dist/x86_64-osx/Cabal-2.4.0.1/
+!.stack-work/dist/x86_64-osx/Cabal-2.4.0.1/build
+!.stack-work/dist/x86_64-osx/Cabal-2.4.0.1/build/autogen
+!.stack-work/dist/x86_64-osx/Cabal-2.4.0.1/build/autogen/Proto
+!.stack-work/dist/x86_64-osx/Cabal-2.4.0.1/build/autogen/Proto/Raft
+!.stack-work/dist/x86_64-osx/Cabal-2.4.0.1/build/autogen/Proto/Raft/*
 baraban.cabal
 *~
 .idea
 out
 *.iml
+!autogen
