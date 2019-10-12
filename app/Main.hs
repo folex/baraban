@@ -39,7 +39,7 @@ connectTo host port = runTCPClient host port talk
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO ()) -> IO ()
 runTCPClient host port client = withSocketsDo $ do
     addr <- resolve
-    E.bracket (open addr) close (\s -> (client s >> putStrLn "closed bracket"))
+    E.bracket (open addr) close client
   where
     resolve = do
         let hints = defaultHints { addrSocketType = Stream }
