@@ -3,6 +3,7 @@
 
 module Lib
   ( getPortHost
+  , usage
   , listenAt
   , runTCPClient
   , heartbeat
@@ -39,7 +40,9 @@ getPortHost args =
   case args of
     [p]     -> (p, Nothing)
     p:(h:_) -> (p, Just h)
-    []      -> error "Usage: ./baraban (connect | listen) port [host]"
+    []      -> error usage
+
+usage = "Usage: ./baraban (connect | listen) port [host]"
 
 -- Network functions
 listenAt :: String -> Maybe HostName -> (Socket -> IO ()) -> IO ()
@@ -60,7 +63,7 @@ listenAt port host talk =
         -- set CloseOnExec for the security reasons.
       let fd = fdSocket sock
       setCloseOnExecIfNeeded fd
-      listen sock 10
+      listen sock 10 -- max number of queued connections
       putStrLn $ "Listening at " ++ show addr
       return sock
     loop sock =
