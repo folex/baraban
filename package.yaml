@@ -44,9 +44,6 @@ library:
 
 executables:
   baraban-exe:
-    other-modules:
-      - Proto.Raft.Raft
-      - Proto.Raft.Raft_Fields
     main:                Main.hs
     source-dirs:         app
     ghc-options:
