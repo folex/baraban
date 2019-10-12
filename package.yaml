@@ -35,6 +35,8 @@ dependencies:
   - proto-lens-runtime
   - proto-lens-setup
   - text
+  - either
+  - lens-family
 
 library:
   other-modules:

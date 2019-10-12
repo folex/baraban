@@ -1,36 +1,48 @@
-{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE OverloadedLabels  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
-import Lib
-import Control.Concurrent (forkFinally, forkIO, threadDelay)
-import Control.Monad (forever, unless, void)
-import Data.Maybe (fromJust)
-import Network.Socket hiding (recv, recvFrom, send, sendTo)
-import Network.Socket.ByteString
-import System.Environment (getArgs)
-import Data.ProtoLens.Encoding (encodeMessage)
-import qualified Control.Exception as E
-import qualified Data.ByteString as S
+import           Control.Concurrent        (forkFinally, forkIO, threadDelay)
+import qualified Control.Exception         as E
+import           Control.Monad             (forever, unless, void)
+import qualified Data.ByteString           as S
+import           Data.Either.Combinators   (fromRight')
+import           Data.Maybe                (fromJust)
+import           Data.Monoid               ((<>))
+import           Data.ProtoLens            (showMessage,
+                                            showMessageWithRegistry)
+import           Data.ProtoLens.Encoding   (encodeMessage)
+import           Data.ProtoLens.Message    (register)
+import           Data.Proxy                (Proxy (..))
+import           Lib
+import           Network.Socket            hiding (recv, recvFrom, send, sendTo)
+import           Network.Socket.ByteString
+import           Proto.Raft.Raft           (RaftMessage'Value (..))
+import           Proto.Raft.Raft_Fields    (maybe'value)
+import           System.Environment        (getArgs)
+
+import           Lens.Family2              (view)
 
 main :: IO ()
 main = do
   args <- getArgs
   (port, host) <- getPortHost $ tail args
   case head args of
-    "listen" -> listenAt port host receiveRaft
+    "listen"  -> listenAt port host receiveRaft
     "connect" -> runTCPClient (fromJust host) port sendHeartbeat
 
 receiveRaft :: Socket -> IO ()
-receiveRaft socket = forever $ do
-  msg <- recv socket 1024
-  unless (S.null msg) $ do
-    let raft = decodeRaftMessage msg
-    putStrLn $ "Got message " ++ show raft
+receiveRaft socket =
+  forever $ do
+    msg <- recv socket 1024
+    unless (S.null msg) $
+      case decodeRaftMessage' msg of
+        RaftMessage'Heartbeat hb -> putStrLn $ "Got heartbeat " ++ show hb
+        etc -> putStrLn $ "Got something else " ++ show etc
 
 sendHeartbeat :: Socket -> IO()
 sendHeartbeat socket = repeatedly $ sendAll socket ping
   where
-    ping = encodeMessage $ heartbeat 1000
+    ping = encodeRaftMessage $ heartbeat 1000
     repeatedly action = forever $ threadDelay (1 * 1000000) >> action

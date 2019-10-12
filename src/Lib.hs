@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedLabels #-}
+{-# LANGUAGE OverloadedLabels  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
@@ -7,32 +7,42 @@ module Lib
   , runTCPClient
   , heartbeat
   , decodeHeartbeat
+  , raftMessage
   , decodeRaftMessage
+  , decodeRaftMessage'
+  , encodeRaftMessage
   ) where
 
-import Control.Concurrent (forkFinally, forkIO)
-import qualified Control.Exception as E
-import Control.Monad (forever, unless, void)
-import qualified Data.ByteString as S
-import Data.Maybe (fromJust)
-import Data.ProtoLens (buildMessage, defMessage, parseMessage)
-import Data.ProtoLens.Encoding (decodeMessage, encodeMessage)
-import Data.ProtoLens.Labels ()
-import Data.ProtoLens.Runtime.Data.Word (Word32)
-import Lens.Micro
-import Lens.Micro.Extras (view)
-import Network.Socket hiding (recv, recvFrom, send, sendTo)
-import Network.Socket.ByteString
-import Proto.Raft.Raft
-import System.Environment (getArgs)
-import System.IO (BufferMode(..), Handle, hGetLine, hPutStrLn, hSetBuffering)
+import           Control.Concurrent               (forkFinally, forkIO)
+import qualified Control.Exception                as E
+import           Control.Monad                    (forever, unless, void)
+import qualified Data.ByteString                  as S
+import           Data.Either.Combinators          (fromRight')
+import           Data.Maybe                       (fromJust)
+import           Data.ProtoLens                   (buildMessage, defMessage,
+                                                   parseMessage)
+import           Data.ProtoLens.Encoding          (decodeMessage, encodeMessage)
+import           Data.ProtoLens.Labels            ()
+import           Data.ProtoLens.Runtime.Data.Word (Word32)
+import           Lens.Micro
+import           Lens.Micro.Extras                (view)
+import           Network.Socket                   hiding (recv, recvFrom, send,
+                                                   sendTo)
+import           Network.Socket.ByteString
+import           Proto.Raft.Raft
+import           Proto.Raft.Raft_Fields           (maybe'value)
+import           System.Environment               (getArgs)
+import           System.IO                        (BufferMode (..), Handle,
+                                                   hGetLine, hPutStrLn,
+                                                   hSetBuffering)
 
--- CLI 
+
+-- CLI
 getPortHost :: [String] -> IO (String, Maybe HostName)
 getPortHost args =
   return $
   case args of
-    [p] -> (p, Nothing)
+    [p]     -> (p, Nothing)
     p:(h:_) -> (p, Just h)
 
 -- Network functions
@@ -80,8 +90,30 @@ runTCPClient host port client = withSocketsDo $ do
 heartbeat :: Word32 -> Heartbeat
 heartbeat t = defMessage & #term .~ t
 
+raftMessage :: RaftMessage
+raftMessage = defMessage & #heartbeat .~ heartbeat 1000
+
 decodeHeartbeat :: S.ByteString -> Either String Heartbeat
 decodeHeartbeat = decodeMessage
 
 decodeRaftMessage :: S.ByteString -> Either String RaftMessage
 decodeRaftMessage = decodeMessage
+
+decodeRaftMessage' :: S.ByteString -> RaftMessage'Value
+decodeRaftMessage' m = fromJust $ view maybe'value $ fromRight' $ decodeRaftMessage m
+
+encodeRaftMessage :: (RaftMsg msg) => msg -> S.ByteString
+encodeRaftMessage = encodeMessage . wrap
+
+-- Protobuf Typeclasses
+class RaftMsg a where
+  wrap :: a -> RaftMessage
+
+instance RaftMsg Heartbeat where
+  wrap heartbeat = defMessage & #heartbeat .~ heartbeat
+instance RaftMsg Vote where
+  wrap vote = defMessage & #vote .~ vote
+instance RaftMsg Stand where
+  wrap stand = defMessage & #stand .~ stand
+instance RaftMsg Leader where
+  wrap leader = defMessage & #leader .~ leader
