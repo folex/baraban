@@ -10,8 +10,7 @@ import qualified Data.ByteString           as S
 import           Data.Either.Combinators   (fromRight')
 import           Data.Maybe                (fromJust)
 import           Data.Monoid               ((<>))
-import           Data.ProtoLens            (showMessage,
-                                            showMessageWithRegistry)
+import           Data.ProtoLens            (showMessageWithRegistry)
 import           Data.ProtoLens.Encoding   (encodeMessage)
 import           Data.ProtoLens.Message    (register)
 import           Data.Proxy                (Proxy (..))
@@ -32,17 +31,4 @@ main = do
     "listen"  -> listenAt port host receiveRaft
     "connect" -> runTCPClient (fromJust host) port sendHeartbeat
 
-receiveRaft :: Socket -> IO ()
-receiveRaft socket =
-  forever $ do
-    msg <- recv socket 1024
-    unless (S.null msg) $
-      case decodeRaftMessage' msg of
-        RaftMessage'Heartbeat hb -> putStrLn $ "Got heartbeat " ++ show hb
-        etc -> putStrLn $ "Got something else " ++ show etc
 
-sendHeartbeat :: Socket -> IO()
-sendHeartbeat socket = repeatedly $ sendAll socket ping
-  where
-    ping = encodeRaftMessage $ heartbeat 1000
-    repeatedly action = forever $ threadDelay (1 * 1000000) >> action

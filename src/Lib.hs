@@ -11,31 +11,26 @@ module Lib
   , decodeRaftMessage
   , decodeRaftMessage'
   , encodeRaftMessage
+  , receiveRaft
+  , sendHeartbeat
   ) where
 
-import           Control.Concurrent               (forkFinally, forkIO)
+import           Control.Concurrent               (forkFinally, threadDelay)
 import qualified Control.Exception                as E
 import           Control.Monad                    (forever, unless, void)
 import qualified Data.ByteString                  as S
 import           Data.Either.Combinators          (fromRight')
 import           Data.Maybe                       (fromJust)
-import           Data.ProtoLens                   (buildMessage, defMessage,
-                                                   parseMessage)
+import           Data.ProtoLens                   (defMessage)
 import           Data.ProtoLens.Encoding          (decodeMessage, encodeMessage)
 import           Data.ProtoLens.Labels            ()
 import           Data.ProtoLens.Runtime.Data.Word (Word32)
 import           Lens.Micro
 import           Lens.Micro.Extras                (view)
-import           Network.Socket                   hiding (recv, recvFrom, send,
-                                                   sendTo)
+import           Network.Socket                   hiding (recv, recvFrom, send)
 import           Network.Socket.ByteString
 import           Proto.Raft.Raft
 import           Proto.Raft.Raft_Fields           (maybe'value)
-import           System.Environment               (getArgs)
-import           System.IO                        (BufferMode (..), Handle,
-                                                   hGetLine, hPutStrLn,
-                                                   hSetBuffering)
-
 
 -- CLI
 getPortHost :: [String] -> IO (String, Maybe HostName)
@@ -44,6 +39,7 @@ getPortHost args =
   case args of
     [p]     -> (p, Nothing)
     p:(h:_) -> (p, Just h)
+    []      -> error "Usage: ./baraban (connect | listen) port [host]"
 
 -- Network functions
 listenAt :: String -> Maybe HostName -> (Socket -> IO ()) -> IO ()
@@ -74,17 +70,33 @@ listenAt port host talk =
         void $ forkFinally (talk conn) (\_ -> close conn)
 
 runTCPClient :: HostName -> ServiceName -> (Socket -> IO ()) -> IO ()
-runTCPClient host port client = withSocketsDo $ do
+runTCPClient host port client =
+  withSocketsDo $ do
     addr <- resolve
     E.bracket (open addr) close client
   where
     resolve = do
-        let hints = defaultHints { addrSocketType = Stream }
-        head <$> getAddrInfo (Just hints) (Just host) (Just port)
+      let hints = defaultHints {addrSocketType = Stream}
+      head <$> getAddrInfo (Just hints) (Just host) (Just port)
     open addr = do
-        sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
-        connect sock $ addrAddress addr
-        return sock
+      sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+      connect sock $ addrAddress addr
+      return sock
+
+receiveRaft :: Socket -> IO ()
+receiveRaft socket =
+  forever $ do
+    msg <- recv socket 1024
+    unless (S.null msg) $
+      case decodeRaftMessage' msg of
+        RaftMessage'Heartbeat hb -> putStrLn $ "Got heartbeat " ++ show hb
+        etc -> putStrLn $ "Got something else " ++ show etc
+
+sendHeartbeat :: Socket -> IO ()
+sendHeartbeat socket = repeatedly $ sendAll socket ping
+  where
+    ping = encodeRaftMessage $ heartbeat 1000
+    repeatedly action = forever $ threadDelay (1 * 1000000) >> action
 
 -- Protobuf funtions
 heartbeat :: Word32 -> Heartbeat
@@ -111,9 +123,12 @@ class RaftMsg a where
 
 instance RaftMsg Heartbeat where
   wrap heartbeat = defMessage & #heartbeat .~ heartbeat
+
 instance RaftMsg Vote where
   wrap vote = defMessage & #vote .~ vote
+
 instance RaftMsg Stand where
   wrap stand = defMessage & #stand .~ stand
+
 instance RaftMsg Leader where
   wrap leader = defMessage & #leader .~ leader
