@@ -4,6 +4,7 @@
 module Lib
   ( getPortHost
   , listenAt
+  , runTCPClient
   , heartbeat
   , decodeHeartbeat
   , decodeRaftMessage
@@ -61,6 +62,19 @@ listenAt port host talk =
         (conn, peer) <- accept sock
         putStrLn $ "Connection from " ++ show peer
         void $ forkFinally (talk conn) (\_ -> close conn)
+
+runTCPClient :: HostName -> ServiceName -> (Socket -> IO ()) -> IO ()
+runTCPClient host port client = withSocketsDo $ do
+    addr <- resolve
+    E.bracket (open addr) close client
+  where
+    resolve = do
+        let hints = defaultHints { addrSocketType = Stream }
+        head <$> getAddrInfo (Just hints) (Just host) (Just port)
+    open addr = do
+        sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+        connect sock $ addrAddress addr
+        return sock
 
 -- Protobuf funtions
 heartbeat :: Word32 -> Heartbeat

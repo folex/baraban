@@ -19,32 +19,18 @@ main = do
   args <- getArgs
   (port, host) <- getPortHost $ tail args
   case head args of
-    "listen" -> listenAt port host receive
-    "connect" -> connectTo (fromJust host) port
+    "listen" -> listenAt port host receiveRaft
+    "connect" -> runTCPClient (fromJust host) port sendHeartbeat
 
-receive :: Socket -> IO ()
-receive conn = forever $ do
-  msg <- recv conn 1024
+receiveRaft :: Socket -> IO ()
+receiveRaft socket = forever $ do
+  msg <- recv socket 1024
   unless (S.null msg) $ do
     let raft = decodeRaftMessage msg
     putStrLn $ "Got message " ++ show raft
 
-connectTo :: String -> String -> IO ()
-connectTo host port = runTCPClient host port talk
+sendHeartbeat :: Socket -> IO()
+sendHeartbeat socket = repeatedly $ sendAll socket ping
   where
-    talk conn = repeatedly $ sendAll conn $ encodeMessage $ heartbeat 1000
+    ping = encodeMessage $ heartbeat 1000
     repeatedly action = forever $ threadDelay (1 * 1000000) >> action
-
-
-runTCPClient :: HostName -> ServiceName -> (Socket -> IO ()) -> IO ()
-runTCPClient host port client = withSocketsDo $ do
-    addr <- resolve
-    E.bracket (open addr) close client
-  where
-    resolve = do
-        let hints = defaultHints { addrSocketType = Stream }
-        head <$> getAddrInfo (Just hints) (Just host) (Just port)
-    open addr = do
-        sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
-        connect sock $ addrAddress addr
-        return sock
