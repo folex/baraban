@@ -1,0 +1,18 @@
+syntax="proto3";
+
+message Heartbeat {
+    uint32 term = 1;
+}
+
+message Vote {
+    Leader leader = 1;
+}
+
+message Stand {
+    Leader self = 1;
+    uint32 term = 2;
+}
+
+message Leader {
+    string id = 1;
+}

@@ -9,7 +9,7 @@ copyright:           "2019 Author name here"
 extra-source-files:
 - README.md
 - ChangeLog.md
-- proto/*.proto
+- proto/**/*.proto
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -33,13 +33,20 @@ dependencies:
   - microlens
   - proto-lens
   - proto-lens-runtime
+  - proto-lens-setup
   - text
 
 library:
+  other-modules:
+    - Proto.Raft.Raft
+    - Proto.Raft.Raft_Fields
   source-dirs: src
 
 executables:
   baraban-exe:
+    other-modules:
+      - Proto.Raft.Raft
+      - Proto.Raft.Raft_Fields
     main:                Main.hs
     source-dirs:         app
     ghc-options:

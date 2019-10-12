@@ -3,7 +3,42 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    hackage: proto-lens-0.5.1.0@sha256:d959c40aabda1ab208a64b0c5abb5519e7956b665275b38beb4c812f51f95987,3266
+    pantry-tree:
+      size: 2205
+      sha256: e556d94fe681c9416e45e993960bf3bbbc769223edc4ea92af306d969375124c
+  original:
+    hackage: proto-lens-0.5.1.0
+- completed:
+    hackage: proto-lens-protoc-0.5.0.0@sha256:bbd744e0b066470f5c433fa3bd20a036326fc01edf290a4ff8d029d95dddb912,2064
+    pantry-tree:
+      size: 783
+      sha256: 30942e172639508c45742e4b0cb6bf3493bee24b291b6cd4c1ad0785f1e9057c
+  original:
+    hackage: proto-lens-protoc-0.5.0.0
+- completed:
+    hackage: proto-lens-runtime-0.5.0.0@sha256:cb39cf13ce4f7dac5414f94a7afe0adc9b831312e6b60588a23bd816accc385f,3132
+    pantry-tree:
+      size: 168
+      sha256: c45212c2b75d27b7a1e32bb34e1ffd7b3cca98e16f4d5a02016ff9b744a0df64
+  original:
+    hackage: proto-lens-runtime-0.5.0.0
+- completed:
+    hackage: proto-lens-setup-0.4.0.2@sha256:2bcc26cd79a318b1988ed89d62f759054fb58bc515700bc4f594bae4a3a64271,3185
+    pantry-tree:
+      size: 235
+      sha256: 2665efe3a077ba832137de64d2c44493ae7db536b7a0aece2b1778d8a865a76d
+  original:
+    hackage: proto-lens-setup-0.4.0.2
+- completed:
+    hackage: ghc-source-gen-0.2.0.1@sha256:4af15901dc325d1269ef04592c3677c41eaa7f9f6bbd43b9707792c2f6c0b159,3437
+    pantry-tree:
+      size: 1762
+      sha256: f357fa9de1c82d267f4c40e63d84896f37b1800b25819e276ad85ac61f039e0e
+  original:
+    hackage: ghc-source-gen-0.2.0.1
 snapshots:
 - completed:
     size: 524789

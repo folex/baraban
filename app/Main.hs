@@ -1,21 +1,26 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedLabels           #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TypeApplications           #-}
+
 module Main where
 
 import Control.Concurrent (forkFinally, forkIO)
 import qualified Control.Exception as E
 import Control.Monad (forever, unless, void)
 import qualified Data.ByteString as S
+import Data.ProtoLens (defMessage, buildMessage, parseMessage)
+import Data.ProtoLens.Labels ()
+import Lens.Micro
+import Lens.Micro.Extras (view)
 import Lib
-import Network.Socket hiding (send, sendTo, recv, recvFrom)
+import Network.Socket hiding (recv, recvFrom, send, sendTo)
 import Network.Socket.ByteString
+import Proto.Raft.Raft (Heartbeat)
 import System.Environment (getArgs)
 import System.IO (BufferMode(..), Handle, hGetLine, hPutStrLn, hSetBuffering)
+import Data.ProtoLens.Runtime.Data.Word (Word32)
 
---main = withSocketsDo $ do
---  args <- getArgs
---  let port = fromIntegral (read $ head args :: Int)
---  sock <- listen port
---  putStrLn $ "Listening on " ++ head args
---  sockHandler sock
 main :: IO ()
 main =
   withSocketsDo $ do
@@ -52,24 +57,8 @@ main =
       unless (S.null msg) $ do
         sendAll conn msg
         talk conn
---sockHandler :: Socket -> IO ()
---sockHandler sock = do
---  (handle, _, _) <- accept sock
---  hSetBuffering handle NoBuffering
---  forkIO $ commandProcessor handle
---  sockHandler sock
---commandProcessor :: Handle -> IO ()
---commandProcessor handle = do
---  line <- hGetLine handle
---  let cmd = words line
---  case head cmd of
---    "echo" -> echoCommand handle cmd
---    "add" -> addCommand handle cmd
---    _ -> hPutStrLn handle "Unknown command"
---  commandProcessor handle
---
---echoCommand :: Handle -> [String] -> IO ()
---echoCommand handle cmd = hPutStrLn handle (unwords $ tail cmd)
---
---addCommand :: Handle -> [String] -> IO ()
---addCommand handle cmd = hPutStrLn handle $ show $ (read $ cmd !! 1) + (read $ cmd !! 2)
+
+heartbeat :: Word32 -> Heartbeat
+heartbeat t =
+  defMessage
+      & #term .~ t
