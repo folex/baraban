@@ -37,20 +37,22 @@ dependencies:
   - proto-lens-runtime
   - proto-lens-setup
   - text
+  - text-show
   - either
   - lens-family
+  - motor
+  - indexed
+  - row-types
 
 library:
-  other-modules:
+  source-dirs: src
+  exposed-modules:
     - Proto.Raft.Raft
     - Proto.Raft.Raft_Fields
-  source-dirs: src
+    - Lib
 
 executables:
   baraban-exe:
-    other-modules:
-      - Proto.Raft.Raft
-      - Proto.Raft.Raft_Fields
     main:                Main.hs
     source-dirs:         app
     ghc-options:
