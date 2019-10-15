@@ -43,6 +43,7 @@ dependencies:
   - motor
   - indexed
   - row-types
+  - containers
 
 library:
   source-dirs: src
