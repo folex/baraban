@@ -42,8 +42,10 @@ dependencies:
   - lens-family
   - motor
   - indexed
+  - indexed-extras
   - row-types
   - containers
+  - lens
 
 library:
   source-dirs: src
@@ -51,6 +53,8 @@ library:
     - Proto.Raft.Raft
     - Proto.Raft.Raft_Fields
     - Lib
+    - Raft
+    - RaftState
 
 executables:
   baraban-exe:
