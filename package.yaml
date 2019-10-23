@@ -46,6 +46,12 @@ dependencies:
   - row-types
   - containers
   - lens
+  - stm
+  - stm-delay
+  - stm-chans
+  - mtl
+  - transformers-base
+  - time
 
 library:
   source-dirs: src
